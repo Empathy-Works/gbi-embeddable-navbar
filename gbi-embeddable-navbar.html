@@ -1,0 +1,135 @@
+<script type="text/javascript">
+    fetch('https://app.thegbi.org/resources/accounts/me/', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+    })
+        .then(text => {
+            return text.json()
+        })
+        .then(userData => {
+            if (userData.email) {
+                document.querySelector('.logged-in-actions').style.display = 'flex';
+                document.querySelector('.logged-out-actions').style.display = 'none';
+                document.querySelector('.menu-item-25 a').href = 'https://app.thegbi.org/project/';
+            } else {
+                document.querySelector('.logged-in-actions').style.display = 'none';
+                document.querySelector('.logged-out-actions').style.display = 'flex';
+            }
+        })
+        .catch(error => console.log('Authentication request failed', error));
+</script>
+
+
+<div class="header-top">
+  <!--- site-wide-search UI (see site-wide-search JS at bottom of page)-->
+  <a href="#" class="tip-top-nav-item">
+    <div class="site-wide-search-wrapper" style="display: none;">
+      <select class="site-wide-search" placeholder="Search" style="width: 15em"></select>
+    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round"
+         style="width: 18px" class="site-wide-search-icon">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </a>
+  <!--- /site-wide-search UI -->
+
+  <div class="logged-in-actions" style="display: none;">
+    <b class="header-username"></b>
+    <a href="https://app.thegbi.org/" class="tip-top-nav-item">My Account</a>
+    <a href="https://app.thegbi.org/accounts/logout/" class="tip-top-nav-item">Log Out</a>
+  </div>
+  <div class="logged-out-actions" style="display: none;">
+    <a href="https://app.thegbi.org/accounts/signup/"
+       class="tip-top-nav-item"> <?php get_template_part( 'template-parts/svg', 'register' ); ?> Create Account</a>
+    <a href="https://app.thegbi.org/accounts/login/"
+       class="tip-top-nav-item"> <?php get_template_part( 'template-parts/svg', 'login' ); ?> Log In</a>
+  </div>
+</div>
+
+
+<!-- site-wide-search JS -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.css">
+<script>
+    const gbiSite = 'https://app.thegbi.org';
+    const searchApi = `${gbiSite}/search/`;
+    let select = new TomSelect('.site-wide-search', {
+        valueField: "url",
+        labelField: "title",
+        searchField: [], //Setting this to empty string will disable searching on the client side(https://github.com/orchidjs/tom-select/issues/78)
+        loadThrottle: 500, // slightly increase default throttle value
+        optgroupField: "class",
+        maxOptions: null, // setting this to null will show all possible options
+        optgroups: {},
+        preload: "focus", //Setting this to true will call load function on page load
+        closeAfterSelect: true,
+        sortField: [{field: "$order"}, {field: "$score"}], //To disable sorting entirely and maintain the original order of options
+
+        // fetch remote data
+        load: function (query, callback) {
+            let url = `${searchApi}?search_text=${encodeURIComponent(query)}`;
+            fetch(url, {credentials: 'include'})
+                .then((response) => response.json())
+                .then((data) => {
+                    this.clearOptions(); //Clearing the options before adding new ones
+                    this.optgroups = data.groups; //Setting optgroups dynamically
+                    callback(data.items);
+                })
+                .catch(() => {
+                    callback();
+                });
+        },
+        //Take the user to option's url on clicking or hitting enter
+        onChange: function (value) {
+            if (!value.startsWith('http')) value = gbiSite + value
+            window.location = value;
+        },
+        onFocus: function (value) {
+            document.querySelector('header').classList.add('search-focused')
+        },
+        onBlur: function (value) {
+            document.querySelector('header').classList.remove('search-focused')
+        },
+        // custom rendering functions for options and items
+        render:
+            {
+                //Render the option groups
+                optgroup_header: function (item, escape) {
+                    return `<div class="optgroup-header border-top h6" notranslate>${escape(item.label)}</div>`;
+                }
+                ,
+                option: function (item, escape) {
+                    return `<div class="py-2 d-flex" notranslate>
+            <div class="icon me-3">
+              <div><i class="fas fa-lg text-primary fa-duotone ${item.icon} mx-2"></i>${escape(item.title)}</div>
+            </div>
+          </div>`;
+                }
+                ,
+                item: function (item, escape) {
+                    return `<div class="py-2 d-flex" notranslate>
+            <div class="icon me-3">
+              <div>${escape(item.title)}</div>
+            </div>
+          </div>`;
+                },
+                dropdown: function () {
+                    return '<div notranslate></div>'; /* do not translate any of the search dropdown into other languages */
+                }
+            }
+        ,
+    });
+    //Set click event listener on the font-awesome icon
+    let searchIcon = document.querySelector('.site-wide-search-icon');
+    searchIcon.addEventListener('click', function () {
+        searchIcon.style.display = 'none';
+        document.querySelector('.site-wide-search-wrapper').style.display = 'block';
+        select.focus();
+    })
+</script>
