@@ -5,6 +5,9 @@ module.exports = {
     output: {
         filename: 'gbi-account-nav.min.js',
         path: path.resolve(__dirname, 'dist'),
+        library: {
+            type: 'umd', // Universal Module Definition
+        }
     },
     module: {
         rules: [
