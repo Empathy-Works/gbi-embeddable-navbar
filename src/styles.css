@@ -13,7 +13,7 @@ body {
     align-items: center;
 }
 
-.navbar button {
+.navbar a {
     background-color: var(--color-green);
     border: none;
     padding: 12px 30px;
@@ -21,6 +21,8 @@ body {
     font-size: 14px;
     cursor: pointer;
     transition: background-color 0.3s;
+    text-decoration: none;
+    text-transform: uppercase;
 }
 
 .logged-out-actions, .logged-in-actions {
@@ -35,7 +37,7 @@ body {
     border-radius: 0 20px 20px 0;
 }
 
-.navbar button:hover {
+.navbar a:hover {
     background-color: var(--color-green-50);
 }
 

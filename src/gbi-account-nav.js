@@ -23,12 +23,12 @@ class GBIAccountNav {
             </div>
           </div>
           <div class="logged-out-actions" style="display: none;">
-            <button class="first-button">CREATE ACCOUNT</button>
-            <button class="second-button">LOGIN</button>
+            <a href="https://app.thegbi.org/accounts/signup/" class="first-button"> Create Account</a>
+            <a href="https://app.thegbi.org/accounts/login/" class="second-button"> Login</a>
           </div>
           <div class="logged-in-actions" style="display: none;">
-              <button class="first-button">MY ACCOUNT</button>
-              <button class="second-button">LOGOUT</button>
+              <a href="https://app.thegbi.org/" class="first-button">My Account</a>
+              <a href="https://app.thegbi.org/accounts/logout/" class="second-button">Logout</a>
           </div>
         </nav>
         `;
