@@ -2,7 +2,8 @@ import TomSelect from "tom-select";
 
 export function setupSearch() {
   const gbiSite = 'https://app.thegbi.org';
-  const searchApi = `${gbiSite}/search/`;
+  const appSearchUrl = `${gbiSite}/search/app/`;
+  const marketingSearchUrl = `${gbiSite}/search/marketing/`;
 
   let select = new TomSelect('.site-wide-search', {
     valueField: "url",
@@ -19,17 +20,52 @@ export function setupSearch() {
 
     // fetch remote data
     load: function (query, callback) {
-      let url = `${searchApi}?search_text=${encodeURIComponent(query)}`;
-      fetch(url, {credentials: 'include'})
-        .then((response) => response.json())
-        .then((data) => {
-          this.clearOptions(); //Clearing the options before adding new ones
-          this.optgroups = data.groups; //Setting optgroups dynamically
-          callback(data.items);
-        })
-        .catch(() => {
-          callback();
-        });
+      if (!query.length) {
+        callback();
+        return;
+      }
+
+      let searchUrls = [
+        `${appSearchUrl}?search_text=${encodeURIComponent(query)}`,
+        `${marketingSearchUrl}?search_text=${encodeURIComponent(query)}`,
+      ];
+
+      this.clearOptions();
+      let groups = {};
+      let pendingRequests = searchUrls.length;
+
+      // Set loading state
+      this.settings.loading = true;
+
+      searchUrls.forEach((url) => {
+        fetch(url)
+          .then((response) => response.json())
+          .then((result) => {
+            const items = result.items;
+
+            items.forEach((item) => {
+              if (item.group && !groups[item.group]) {
+                groups[item.group] = { label: item.group, value: item.group };
+                this.addOptionGroup(item.group, groups[item.group]);
+              }
+            });
+
+            this.addOption(items);
+            // Call callback after each response to refresh the dropdown
+            callback();
+          })
+          .catch((error) => {
+            console.error(`Failed to fetch results from ${url}`, error);
+          })
+          .finally(() => {
+            pendingRequests--;
+            if (pendingRequests === 0) {
+              // Clear loading state when all requests are done
+              this.settings.loading = false;
+              callback();
+            }
+          });
+      });
     },
     //Take the user to option's url on clicking or hitting enter
     onChange: function (value) {
@@ -57,7 +93,10 @@ export function setupSearch() {
         },
         dropdown: function () {
           return '<div notranslate></div>'; /* do not translate any of the search dropdown into other languages */
-        }
+        },
+        no_results: function() {
+          return `<div class="no-results">${this.settings.loading ? "Searching..." : "No results found" }</div>`;
+        },
       }
     ,
   });
